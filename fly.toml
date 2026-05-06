@@ -1,42 +1,54 @@
-# fly.toml app configuration file generated for hexaorzo-vaultwarden on 2025-05-16T02:01:19Z
-#
-# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
-#
 
 app = 'fieldofview'
 primary_region = 'hkg'
 
 [build]
+  builder = 'paas'
+
+[build.args]
+  NODE_ENV = 'production'
+
+[env]
+  NODE_ENV = 'production'
+  # Supabase env vars (manage secrets in Fly dashboard or via flyctl secrets set)
 
 [deploy]
   strategy = 'immediate'
 
-[[mounts]]
-  source = 'fov_data'
-  destination = '/data'
-  initial_size = '3GB'
-  processes = ['app']
+
 
 [[services]]
+  internal_port = 3000
+  processes = ['app']
+  protocol = 'tcp'
   auto_stop_machines = "off"
   auto_start_machines = true
-  http_checks = []
-  internal_port = 80
-  processes = ["app"]
-  protocol = "tcp"
-  script_checks = []
+
 [services.concurrency]
   hard_limit = 25
   soft_limit = 20
-  type = "connections"
+  type = 'connections'
+
+[[services.tcp_checks]]
+  grace_period = '10s'
+  interval = '15s'
+  timeout = '5s'
+
+[[services.http_checks]]
+  grace_period = '10s'
+  interval = '30s'
+  method = 'get'
+  path = '/'
+  protocol = 'http'
+  timeout = '5s'
 
 [[services.ports]]
   force_https = true
-  handlers = ["http"]
+  handlers = ['http']
   port = 80
 
 [[services.ports]]
-  handlers = ["tls", "http"]
+  handlers = ['tls', 'http']
   port = 443
 
 [[vm]]
