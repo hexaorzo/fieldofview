@@ -1,5 +1,4 @@
-# Source: https://nuxtjs.org/deployments/koyeb#dockerize-your-application
-FROM node:lts as builder
+FROM node:lts AS builder
 
 WORKDIR /app
 
