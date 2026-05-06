@@ -1,43 +1,26 @@
-# Build stage
-FROM node:20-alpine AS builder
+# Source: https://nuxtjs.org/deployments/koyeb#dockerize-your-application
+FROM node:lts as builder
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-# Copy lockfile and package files
-COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy source code
 COPY . .
 
-# Build the application
-RUN pnpm run build
+RUN yarn install \
+  --prefer-offline \
+  --frozen-lockfile \
+  --non-interactive \
+  --production=false
 
-# Production stage
-FROM node:20-alpine
+RUN yarn build
+
+FROM node:lts
 
 WORKDIR /app
 
-# Install pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY --from=builder /app .
 
-# Copy package files
-COPY package.json pnpm-workspace.yaml ./
+ENV HOST 0.0.0.0
+ENV PORT 8080
 
-# Install production dependencies only
-RUN pnpm install --prod --frozen-lockfile
-
-# Copy built application from builder
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/.nuxt ./.nuxt
-
-# Expose port
-EXPOSE 3000
-
-# Start the application
+# Source: https://nuxt.com/docs/getting-started/deployment#entry-point
 CMD ["node", ".output/server/index.mjs"]
